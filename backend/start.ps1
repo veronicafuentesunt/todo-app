@@ -1,22 +1,54 @@
-# Step 1: Create venv if it doesn't exist
-if (-Not (Test-Path ".venv")) {
-    Write-Host "Creating virtual environment..."
-    python -m venv .venv
+# Type this to activate the environment: .\.venv\Scripts\Activate.ps1
+# This is to run the server: pwsh ./scripts/start.ps1
+# When installing new packages, run: pip freeze > requirements.txt
+
+param(
+    [string]$Port = "8000"
+)
+
+# Paths
+$venvDir = ".\.venv"
+$activatePath = ".\.venv\Scripts\Activate.ps1"
+$requirementsPath = ".\requirements.txt"
+
+# Ensure venv exists
+if (-not (Test-Path $activatePath)) {
+    Write-Host "Creating virtual environment..." -ForegroundColor Cyan
+    python -m venv $venvDir
 }
 
-# Step 2: Activate the venv
-Write-Host "Activating virtual environment..."
-.venv\Scripts\Activate.ps1
+# Activate venv
+Write-Host "Activating virtual environment..." -ForegroundColor Cyan
+& $activatePath
 
-# Step 3: Upgrade pip (optional but recommended)
-python -m pip install --upgrade pip
-
-# Step 4: Install dependencies if requirements.txt exists
-if (Test-Path "requirements.txt") {
-    Write-Host "Installing dependencies..."
-    pip install -r requirements.txt
+# Function to test if a Python module exists
+function Test-PyImport($moduleName) {
+    $code = "import importlib, sys; sys.exit(0 if importlib.util.find_spec('$moduleName') else 1)"
+    python -c $code
+    return $LASTEXITCODE -eq 0
 }
 
-# Step 5: Run Django server
-Write-Host "Starting Django server..."
-python manage.py runserver
+# Install only if missing
+$needsInstall = $false
+if (-not (Test-PyImport "django")) { $needsInstall = $true }
+if (-not (Test-PyImport "rest_framework")) { $needsInstall = $true }
+
+if ($needsInstall) {
+    if (Test-Path $requirementsPath) {
+        Write-Host "Installing dependencies from requirements.txt..." -ForegroundColor Cyan
+        pip install -r $requirementsPath
+    } else {
+        Write-Host "Installing required packages..." -ForegroundColor Cyan
+        pip install Django djangorestframework
+        pip freeze | Out-File $requirementsPath
+    }
+} else {
+    Write-Host "Dependencies already installed. Skipping pip install." -ForegroundColor Green
+}
+
+# Apply migrations and run server
+Write-Host "Applying migrations..." -ForegroundColor Cyan
+python manage.py migrate
+
+Write-Host "Starting Django server on port $Port..." -ForegroundColor Cyan
+python manage.py runserver "127.0.0.1:$Port"
