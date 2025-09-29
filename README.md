@@ -1,4 +1,5 @@
-To Do App (React Native + Flask)
+# To Do App
+(React Native + Flask)
 Overview
 A simple cross platform to do list app built with React Native (frontend) and Flask (backend).
 This project demonstrates a clean full stack setup and serves as a foundation for experimenting with UX, ethical design, and future enhancements.
