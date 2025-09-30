@@ -3,11 +3,10 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 
-from tasks.views import TaskViewSet, StatsViewSet  # omit StatsViewSet if you aren't using it
+from tasks.views import TaskViewSet
 
 router = DefaultRouter()
 router.register(r'tasks', TaskViewSet, basename='task')
-router.register(r'stats', StatsViewSet, basename='stats')  # remove this line if not using stats
 
 urlpatterns = [
     path('admin/', admin.site.urls),
